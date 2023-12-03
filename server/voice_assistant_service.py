@@ -24,6 +24,30 @@ def load_config(filepath="./voice_assistant_service_config.xml"):
             raise NotImplementedError(f"voice_assistant_service.load_config(): Not implemented element <{root_child_elm.tag}>")
     return config
 
+def welcome(engine, config):
+    # Set the voice
+    voices = engine.getProperty('voices')
+    chosen_voice_ids = []
+    available_voice_ids = []
+    for voice in voices:
+        # logging.info(f"voice_assistant_service.main(): voice.id: {voice.id}")
+        if config.voice_id.upper() in voice.id.upper():
+            chosen_voice_ids.append(voice.id)
+
+    if len(chosen_voice_ids) == 0:
+        raise NotImplementedError(
+            f"voice_assistant_service.welcome(): The voice id '{config.voice_id}' could not be found in the avalaible voice ids: {available_voice_ids}")
+    if len(chosen_voice_ids) > 1:
+        raise ValueError(f"voice_assistant_service.welcome(): More than one voice id could match '{config.voice_id}': {chosen_voice_ids}")
+    voice_id = chosen_voice_ids[0]
+    logging.info(f"voice_id = {voice_id}")
+
+    engine.setProperty('voice', voice_id)
+    engine.setProperty('rate', 150)
+    engine.setProperty('volume', 1.0)
+    engine.say(config.welcome_message)
+    engine.runAndWait()
+
 def main():
     logging.info("voice_assistant_service.main()")
 
@@ -33,27 +57,11 @@ def main():
     config = load_config(config_filepath)
 
     engine = pyttsx3.init()
-    # Set the voice
-    voices = engine.getProperty('voices')
-    chosen_voice_ids = []
-    available_voice_ids = []
-    for voice in voices:
-        #logging.info(f"voice_assistant_service.main(): voice.id: {voice.id}")
-        if config.voice_id.upper() in voice.id.upper():
-            chosen_voice_ids.append(voice.id)
+    welcome(engine, config)
 
-    if len(chosen_voice_ids) == 0:
-        raise NotImplementedError(f"The voice id '{config.voice_id}' could not be found in the avalaible voice ids: {available_voice_ids}")
-    if len(chosen_voice_ids) > 1:
-        raise ValueError(f"More than one voice id could match '{config.voice_id}': {chosen_voice_ids}")
-    voice_id = chosen_voice_ids[0]
-    logging.info(f"voice_id = {voice_id}")
+    end_of_conversation = False
+    while not end_of_conversation:
 
-    engine.setProperty('voice', voice_id)
-    engine.setProperty('rate', 150)
-    engine.setProperty('volume', 1.0)
-    engine.say(config.welcome_message)
-    engine.runAndWait()
 
 
 if __name__ == '__main__':

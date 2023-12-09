@@ -1,0 +1,15 @@
+<voice_assistant_service_config>
+	<chat_service_url>http://127.0.0.1:5001</chat_service_url>
+	<voice_id>david</voice_id>
+	<language_code>eng</language_code>
+	<welcome_message>Hello! How can I help you?</welcome_message>
+	<goodbye_message>Goodbye!</goodbye_message>
+	<speech_to_text_model>facebook/seamless-m4t-v2-large</speech_to_text_model>
+	<sampling_rate>16000</sampling_rate>
+	<record_time_in_seconds>5.0</record_time_in_seconds>
+	<prompt_seed>Please answer the following question: </prompt_seed>
+	<start_of_response_marker>&lt;|assistant|&gt;</start_of_response_marker>
+	<end_of_conversation_text>Thank you and goodbye</end_of_conversation_text>
+	<speech_minimum_std_dev>50</speech_minimum_std_dev>
+	<chunk_length_in_seconds>1.0</chunk_length_in_seconds>
+</voice_assistant_service_config>

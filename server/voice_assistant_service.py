@@ -1,5 +1,6 @@
 # Note: To add voices for pyttsx3 in Windows 11, follow the instructions in:
 # https://puneet166.medium.com/how-to-added-more-speakers-and-voices-in-pyttsx3-offline-text-to-speech-812c83d14c13
+import ast
 import xml.etree.ElementTree as ET
 import logging
 import pyttsx3
@@ -45,6 +46,8 @@ def load_config(filepath="./voice_assistant_service_config.xml"):
             config.speech_minimum_std_dev = float(root_child_elm.text)
         elif root_child_elm.tag == 'chunk_length_in_seconds':
             config.chunk_length_in_seconds = float(root_child_elm.text)
+        elif root_child_elm.tag == 'gibberish_prefix_list':
+            config.gibberish_prefix_list = ast.literal_eval(root_child_elm.text)
         else:
             raise NotImplementedError(f"voice_assistant_service.load_config(): Not implemented element <{root_child_elm.tag}>")
     return config
@@ -92,7 +95,6 @@ def main():
 
     # Setup the text-to-speech engine
     engine = pyttsx3.init()
-    play_message("jarviss!", engine, config)
 
     # Setup the speech-to-text processor
     stt_processor = None
@@ -102,7 +104,7 @@ def main():
         stt_model = Wav2Vec2ForCTC.from_pretrained(config.speech_to_text_model).to(device)
     elif config.speech_to_text_model == "facebook/seamless-m4t-v2-large":
         stt_processor = AutoProcessor.from_pretrained(config.speech_to_text_model)
-        stt_model = SeamlessM4Tv2Model.from_pretrained(config.speech_to_text_model)
+        stt_model = SeamlessM4Tv2Model.from_pretrained(config.speech_to_text_model).to(device)
     else:
         raise NotImplementedError(f"voice_assistant_service.main(): Not implemented speech-to-text model '{config.speech_to_text_model}'")
 
@@ -122,11 +124,17 @@ def main():
             mic_stream, stt_processor, stt_model, device, config.sampling_rate,
             config
         )
-        if transcription.lower().replace('.', '') == config.end_of_conversation_text.lower():
+        if transcription.lower().replace('.', '').replace('!', '') == config.end_of_conversation_text.lower():
             logging.info(f"voice_assistant_service.main(): End of conversation")
             end_of_conversation = True
         else:
-            if len(transcription) > 24:
+            sentence_is_gibberish = False
+            if transcription[0] == '[':
+                sentence_is_gibberish = True
+            for prefix in config.gibberish_prefix_list:
+                if transcription.lower().startswith(prefix):
+                    sentence_is_gibberish = True
+            if len(transcription) > 15 and not sentence_is_gibberish:
                 response = send_request_to_chat_service(config, transcription)
                 logging.info(f"voice_assistant_service.main(): response = {response}")
                 play_message(response, engine, config)
@@ -169,7 +177,7 @@ def get_sentence(mic_stream, stt_processor, stt_model, device, sampling_rate, co
         # Decode the IDs to text
         transcription = stt_processor.decode(predicted_ids[0]).lower()
     elif config.speech_to_text_model == "facebook/seamless-m4t-v2-large":  # https://huggingface.co/docs/transformers/main/en/model_doc/seamless_m4t_v2
-        audio_inputs = stt_processor(audios=speech_tsr, return_tensors="pt")
+        audio_inputs = stt_processor(audios=speech_tsr, return_tensors="pt").to(device)
         output_tokens = stt_model.generate(**audio_inputs, tgt_lang=config.language_code, generate_speech=False)
         transcription = stt_processor.decode(output_tokens[0].tolist()[0], skip_special_tokens=True)
     else:

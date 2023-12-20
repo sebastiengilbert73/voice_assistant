@@ -10,6 +10,7 @@
 	<prompt_seed>Please answer the following question: </prompt_seed>
 	<start_of_response_marker>&lt;|assistant|&gt;</start_of_response_marker>
 	<end_of_conversation_text>Thank you and goodbye</end_of_conversation_text>
-	<speech_minimum_std_dev>50</speech_minimum_std_dev>
+	<speech_minimum_std_dev>100</speech_minimum_std_dev>
 	<chunk_length_in_seconds>1.0</chunk_length_in_seconds>
+	<gibberish_prefix_list>["i'm going to ", "the first ", "it's a ", "hello"]</gibberish_prefix_list>
 </voice_assistant_service_config>

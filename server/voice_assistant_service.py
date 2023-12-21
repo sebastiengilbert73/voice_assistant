@@ -5,7 +5,6 @@ import xml.etree.ElementTree as ET
 import logging
 import pyttsx3
 from types import SimpleNamespace
-import xml.etree.ElementTree as ET
 import os
 import torch
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor, AutoProcessor, SeamlessM4Tv2Model
